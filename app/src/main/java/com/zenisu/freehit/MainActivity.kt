@@ -15,14 +15,17 @@ import com.spotify.protocol.types.Track
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
+import com.squareup.moshi.JsonAdapter
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Call
+import okhttp3.Callback
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.JsonClass
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import okhttp3.Response
+import java.io.IOException
 
 
 // https://github.com/spotify/android-sdk/issues/322
@@ -30,7 +33,7 @@ import com.squareup.moshi.JsonClass
 class MainActivity : AppCompatActivity() {
     private val clientId = "653361071f2c4916a80b0362510a88b8"
     private val redirectUri = "https://com.zenisu.hitfree/callback"
-    private val songListUri = "https://raw.githubusercontent.com/davidzenisu/freehit/main/data/song_list.json"
+    private val songListUri = "https://raw.githubusercontent.com/davidzenisu/freehit/main/data/spotify_songs.json"
     private val REQUEST_CODE: Int = 1337
     private var spotifyAppRemote: SpotifyAppRemote? = null
 
@@ -89,9 +92,19 @@ class MainActivity : AppCompatActivity() {
                 val track: Track = it.track
                 Log.d("MainActivity", track.name + " by " + track.artist.name)
             }
-            fetchJsonData(songListUri)
-        }
 
+            // Parse JSON using Moshi
+            val moshi = Moshi.Builder()
+                .addLast(KotlinJsonAdapterFactory())
+                .build()
+            val adapter = moshi.adapter(SongList::class.java)
+            fetchJsonData(songListUri, adapter, ::playRandomSong)
+        }
+    }
+
+    private fun playRandomSong(songData: SongList?) {
+        val randomSong = songData?.songList?.random()
+        Log.d("MainActivity", "Next random song is: $randomSong")
     }
 
     @Deprecated("This method has been deprecated")
@@ -124,39 +137,38 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun fetchJsonData(url: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                // Create OkHttp client
-                val client = OkHttpClient()
+    private fun <T> fetchJsonData(url: String, adapter: JsonAdapter<T>, callback: (T?) -> Unit) {
+        try {
+            // Create OkHttp client
+            val client = OkHttpClient()
 
-                // Build request
-                val request = Request.Builder()
-                    .url(url)
-                    .build()
+            // Build request
+            val request = Request.Builder()
+                .url(url)
+                .build()
 
-                // Execute request
-                val response = client.newCall(request).execute()
-
-                if (response.isSuccessful) {
-                    response.body?.let { responseBody ->
-                        val jsonData = responseBody.string()
-
-                        // Parse JSON using Moshi
-                        val moshi = Moshi.Builder().build()
-                        val adapter = moshi.adapter(SongList::class.java)
-
-                        val apiResponse = adapter.fromJson(jsonData)
-
-                        // Use the extracted data
-                        Log.d("MainActivity", "Parsed Data: $apiResponse")
-                    }
-                } else {
-                    Log.e("MainActivity", "Failed to fetch data: ${response.message}")
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    e.printStackTrace()
                 }
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Error fetching data", e)
-            }
+
+                override fun onResponse(call: Call, response: Response) {
+                    response.use {
+                        if (!response.isSuccessful) throw IOException("Unexpected code $response")
+
+                        response.body?.let { responseBody ->
+                            val jsonData = responseBody.string()
+                            val apiResponse = adapter.fromJson(jsonData)
+
+                            // Use the extracted data
+                            Log.d("MainActivity", "Parsed Data: $apiResponse")
+                            callback(apiResponse)
+                        }
+                    }
+                }
+            })
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error fetching data", e)
         }
     }
 }
@@ -165,7 +177,7 @@ class MainActivity : AppCompatActivity() {
 @JsonClass(generateAdapter = true)
 data class SongList(
     val version: String,
-    val songs: List<Song>
+    val songList: List<Song>
 )
 
 @JsonClass(generateAdapter = true)
