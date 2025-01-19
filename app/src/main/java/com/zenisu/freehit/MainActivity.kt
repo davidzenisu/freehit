@@ -16,11 +16,21 @@ import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.JsonClass
+
+
 // https://github.com/spotify/android-sdk/issues/322
 
 class MainActivity : AppCompatActivity() {
     private val clientId = "653361071f2c4916a80b0362510a88b8"
     private val redirectUri = "https://com.zenisu.hitfree/callback"
+    private val songListUri = "https://raw.githubusercontent.com/davidzenisu/freehit/main/data/song_list.json"
     private val REQUEST_CODE: Int = 1337
     private var spotifyAppRemote: SpotifyAppRemote? = null
 
@@ -79,6 +89,7 @@ class MainActivity : AppCompatActivity() {
                 val track: Track = it.track
                 Log.d("MainActivity", track.name + " by " + track.artist.name)
             }
+            fetchJsonData(songListUri)
         }
 
     }
@@ -112,4 +123,55 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
+
+    private fun fetchJsonData(url: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Create OkHttp client
+                val client = OkHttpClient()
+
+                // Build request
+                val request = Request.Builder()
+                    .url(url)
+                    .build()
+
+                // Execute request
+                val response = client.newCall(request).execute()
+
+                if (response.isSuccessful) {
+                    response.body?.let { responseBody ->
+                        val jsonData = responseBody.string()
+
+                        // Parse JSON using Moshi
+                        val moshi = Moshi.Builder().build()
+                        val adapter = moshi.adapter(SongList::class.java)
+
+                        val apiResponse = adapter.fromJson(jsonData)
+
+                        // Use the extracted data
+                        Log.d("MainActivity", "Parsed Data: $apiResponse")
+                    }
+                } else {
+                    Log.e("MainActivity", "Failed to fetch data: ${response.message}")
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error fetching data", e)
+            }
+        }
+    }
 }
+
+// Define the data model for JSON parsing
+@JsonClass(generateAdapter = true)
+data class SongList(
+    val version: String,
+    val songs: List<Song>
+)
+
+@JsonClass(generateAdapter = true)
+data class Song(
+    val title: String,
+    val artist: String,
+    val releaseYear: Int,
+    val spotifyId: String
+)

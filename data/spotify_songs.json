@@ -1,0 +1,65 @@
+{
+  "version": "",
+  "songList": [
+    {
+      "title": "Blinding Lights",
+      "artist": "The Weeknd",
+      "releaseYear": 2019,
+      "spotifyId": "0VjIjW4GlUZAMYd2vXMi3b"
+    },
+    {
+      "title": "Shape of You",
+      "artist": "Ed Sheeran",
+      "releaseYear": 2017,
+      "spotifyId": "7qiZfU4dY1lWllzX7mPBI3"
+    },
+    {
+      "title": "Dance Monkey",
+      "artist": "Tones and I",
+      "releaseYear": 2019,
+      "spotifyId": "2XU0oxnq2qxCpomAAuJY8K"
+    },
+    {
+      "title": "Someone You Loved",
+      "artist": "Lewis Capaldi",
+      "releaseYear": 2018,
+      "spotifyId": "7qEHsqek33rTcFNT9PFqLf"
+    },
+    {
+      "title": "Rockstar",
+      "artist": "Post Malone ft. 21 Savage",
+      "releaseYear": 2017,
+      "spotifyId": "7wGoVu4Dady5GV0Sv4UIsx"
+    },
+    {
+      "title": "Sunflower",
+      "artist": "Post Malone, Swae Lee",
+      "releaseYear": 2018,
+      "spotifyId": "3KkXRkHbMCARz0aVfEt68P"
+    },
+    {
+      "title": "Señorita",
+      "artist": "Shawn Mendes, Camila Cabello",
+      "releaseYear": 2019,
+      "spotifyId": "0TK2YIli7K1leLovkQiNik"
+    },
+    {
+      "title": "Stay",
+      "artist": "The Kid LAROI, Justin Bieber",
+      "releaseYear": 2021,
+      "spotifyId": "5PjdY0CKGZdEuoNab3yDmX"
+    },
+    {
+      "title": "Bad Guy",
+      "artist": "Billie Eilish",
+      "releaseYear": 2019,
+      "spotifyId": "2Fxmhks0bxGSBdJ92vM42m"
+    },
+    {
+      "title": "Perfect",
+      "artist": "Ed Sheeran",
+      "releaseYear": 2017,
+      "spotifyId": "0tgVpDi06FyKpA1z0VMD4v"
+    }
+  ]
+}

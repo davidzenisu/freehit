@@ -59,4 +59,8 @@ dependencies {
 
     implementation(libs.auth)
     implementation(libs.androidx.browser)
+
+    implementation(libs.okhttp)
+    implementation(libs.moshi)
+    implementation(libs.moshi.kotlin)
 }
