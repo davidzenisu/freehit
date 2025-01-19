@@ -36,6 +36,9 @@ class MainActivity : AppCompatActivity() {
     private val songListUri = "https://raw.githubusercontent.com/davidzenisu/freehit/main/data/spotify_songs.json"
     private val REQUEST_CODE: Int = 1337
     private var spotifyAppRemote: SpotifyAppRemote? = null
+    private var songList: SongList? = null
+    private var spotifyPremium: Boolean = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,11 +56,37 @@ class MainActivity : AppCompatActivity() {
         Log.d("MainActivity", "Application has started.")
     }
 
+    override fun onPause() {
+        super.onPause()
+        spotifyAppRemote?.playerApi?.pause()
+        Log.d("MainActivity", "Application has paused.")
+    }
+
     fun login(view: View) {
         val builder: AuthorizationRequest.Builder = AuthorizationRequest.Builder(clientId, AuthorizationResponse.Type.TOKEN, redirectUri)
         builder.setScopes(arrayOf("app-remote-control"))
         val request: AuthorizationRequest = builder.build()
         AuthorizationClient.openLoginActivity(this, REQUEST_CODE, request)
+    }
+
+    fun playRandomSong(view: View) {
+        songList?.songList?.let { songs ->
+            val randomSong = songs.random()
+            Log.d("MainActivity", "Next random song is: $randomSong")
+            // Legacy: Play a playlist
+            //val playUri = "spotify:playlist:37i9dQZF1DX2sUQwD7tbmL"
+            val playUri = "spotify:track:${randomSong.spotifyId}"
+            spotifyAppRemote?.let { spotifyPlayer ->
+                spotifyPlayer.playerApi.play(playUri)
+                // Subscribe to PlayerState
+                spotifyPlayer.playerApi.subscribeToPlayerState().setEventCallback {
+                    val track: Track = it.track
+                    Log.d("MainActivity", track.name + " by " + track.artist.name)
+                }
+                return
+            }
+        }
+        Log.d("MainActivity", "Preparations not completed!")
     }
 
     private fun connect(token: String) {
@@ -83,28 +112,32 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun connected() {
-        spotifyAppRemote?.let {
-            // Play a playlist
-            val playlistURI = "spotify:playlist:37i9dQZF1DX2sUQwD7tbmL"
-            it.playerApi.play(playlistURI)
-            // Subscribe to PlayerState
-            it.playerApi.subscribeToPlayerState().setEventCallback {
-                val track: Track = it.track
-                Log.d("MainActivity", track.name + " by " + track.artist.name)
-            }
+        premiumCheck()
+    }
 
-            // Parse JSON using Moshi
-            val moshi = Moshi.Builder()
-                .addLast(KotlinJsonAdapterFactory())
-                .build()
-            val adapter = moshi.adapter(SongList::class.java)
-            fetchJsonData(songListUri, adapter, ::playRandomSong)
+    private fun premiumCheck() {
+        spotifyAppRemote?.let { spotifyPlayer ->
+            spotifyPlayer.userApi.capabilities.setResultCallback { capabilities ->
+                if (capabilities.canPlayOnDemand) {
+                    // Next, fetch song list
+                    fetchSongList()
+                } else {
+                    Log.d("MainActivity", "User cannot play on demand!")
+                }
+            }
         }
     }
 
-    private fun playRandomSong(songData: SongList?) {
-        val randomSong = songData?.songList?.random()
-        Log.d("MainActivity", "Next random song is: $randomSong")
+    private fun fetchSongList() {
+        val moshi = Moshi.Builder()
+            .addLast(KotlinJsonAdapterFactory())
+            .build()
+        val adapter = moshi.adapter(SongList::class.java)
+        fetchJsonData(songListUri, adapter, ::setSongList)
+    }
+
+    private fun setSongList(songData: SongList?) {
+        songList = songData
     }
 
     @Deprecated("This method has been deprecated")
@@ -134,7 +167,6 @@ class MainActivity : AppCompatActivity() {
         spotifyAppRemote?.let {
             SpotifyAppRemote.disconnect(it)
         }
-
     }
 
     private fun <T> fetchJsonData(url: String, adapter: JsonAdapter<T>, callback: (T?) -> Unit) {
