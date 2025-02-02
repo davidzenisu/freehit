@@ -302,6 +302,8 @@ class MainActivity : AppCompatActivity() {
                             }
                         } catch (e: Exception) {
                             runOnUiThread {
+                                val progressBar : View = findViewById(R.id.progressBar)
+                                progressBar.isVisible = false
                                 val errorMessage : TextView = findViewById(R.id.errorMessage)
                                 errorMessage.text = "Critical error while fetching resource: $e"
                                 errorMessage.isVisible = true
@@ -313,13 +315,6 @@ class MainActivity : AppCompatActivity() {
                 }
             })
         } catch (e: Exception) {
-            runOnUiThread {
-                val errorMessage : TextView = findViewById(R.id.errorMessage)
-                errorMessage.text = "Critical error while fetching resource: $e"
-                errorMessage.isVisible = true
-                val progessBar : View = findViewById(R.id.progressBar)
-                progessBar.isVisible = false
-            }
             Log.e("MainActivity", "Error fetching data", e)
         }
     }
