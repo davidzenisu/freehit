@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Freehit</string>
+    <string name="connect_spotify">Connect Spotify</string>
+    <string name="artist"><![CDATA[<Artist>]]></string>
+    <string name="now_playing">Now playing:</string>
+    <string name="welcome">Hi, time to play a hit!</string>
+    <string name="play">Play a song</string>
+    <string name="track"><![CDATA[<Track>]]></string>
+    <string name="year"><![CDATA[<Year>]]></string>
+    <string name="reveal">Reveal!</string>
 </resources>
