@@ -289,20 +289,37 @@ class MainActivity : AppCompatActivity() {
 
                 override fun onResponse(call: Call, response: Response) {
                     response.use {
-                        if (!response.isSuccessful) throw IOException("Unexpected code $response")
+                        try {
+                            if (!response.isSuccessful) throw IOException("Unexpected code $response")
 
-                        response.body?.let { responseBody ->
-                            val jsonData = responseBody.string()
-                            val apiResponse = adapter.fromJson(jsonData)
+                            response.body?.let { responseBody ->
+                                val jsonData = responseBody.string()
+                                val apiResponse = adapter.fromJson(jsonData)
 
-                            // Use the extracted data
-                            Log.d("MainActivity", "Parsed Data: $apiResponse")
-                            callback(apiResponse)
+                                // Use the extracted data
+                                Log.d("MainActivity", "Parsed Data: $apiResponse")
+                                callback(apiResponse)
+                            }
+                        } catch (e: Exception) {
+                            runOnUiThread {
+                                val errorMessage : TextView = findViewById(R.id.errorMessage)
+                                errorMessage.text = "Critical error while fetching resource: $e"
+                                errorMessage.isVisible = true
+                            }
+                            Log.e("MainActivity", "Error fetching data", e)
                         }
+
                     }
                 }
             })
         } catch (e: Exception) {
+            runOnUiThread {
+                val errorMessage : TextView = findViewById(R.id.errorMessage)
+                errorMessage.text = "Critical error while fetching resource: $e"
+                errorMessage.isVisible = true
+                val progessBar : View = findViewById(R.id.progressBar)
+                progessBar.isVisible = false
+            }
             Log.e("MainActivity", "Error fetching data", e)
         }
     }
